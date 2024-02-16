@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+<!-- Set the title for login page -->
+{% block title %} - Login to play match{% endblock title %}
+
+<!-- Content block for the Login page -->
+{% block content %}
+<div class="row">
+    <div class="col-md-5 mx-auto">
+        <!-- Card with a form for user login -->
+        <div class="card card-body">
+            <h3 class="text-dark text-center mb-0">Login to Continue</h3>
+            <hr class="text-muted mx-auto w-25">
+            
+            <!-- Display error messages if any -->
+            {% if flash.error %}
+                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                    {{ flash.error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+            
+            <!-- Login form with fields for username and password -->
+            <form action="/login" method="POST">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-user-alt"></i></span>
+                    <input type="text" class="form-control" name="username" placeholder="Username" required>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" name="password" placeholder="Password" required>
+                </div>
+                
+                <!-- Button to submit the login form -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-outline-primary">Login</button>
+                </div>
+            </form>
+            
+            <!-- Link for user registration if they don't have an account -->
+            <div class="text-center text-muted mt-4">
+                <small>Don't have an account? <a href="/register">Create one</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

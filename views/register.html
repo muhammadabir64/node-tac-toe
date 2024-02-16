@@ -1,0 +1,47 @@
+{% extends "base.html" %}
+
+<!-- Set the title for register page -->
+{% block title %} - Create an account{% endblock title %}
+
+<!-- Content block for the Create an account page -->
+{% block content %}
+<div class="row">
+    <div class="col-md-5 mx-auto">
+        <!-- Card with a form for user registration -->
+        <div class="card card-body">
+            <h3 class="text-dark text-center mb-0">Create an Account</h3>
+            <hr class="text-muted mx-auto w-25">
+            
+            <!-- Display error messages if any -->
+            {% if flash.error %}
+                <div class="alert alert-danger alert-dismissible fade show mt-2" role="alert">
+                    {{ flash.error }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            {% endif %}
+            
+            <!-- Registration form with fields for username and password -->
+            <form action="/register" method="POST">
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-user-alt"></i></span>
+                    <input type="text" class="form-control" name="username" placeholder="Username" required>
+                </div>
+                <div class="input-group mb-3">
+                    <span class="input-group-text"><i class="fas fa-lock"></i></span>
+                    <input type="password" class="form-control" name="password" placeholder="Password" required>
+                </div>
+                
+                <!-- Button to submit the registration form -->
+                <div class="text-center">
+                    <button type="submit" class="btn btn-outline-success">Register</button>
+                </div>
+            </form>
+            
+            <!-- Link for user login if they already have an account -->
+            <div class="text-center text-muted mt-4">
+                <small>Already have an account? <a href="/login">Login here</a></small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock content %}

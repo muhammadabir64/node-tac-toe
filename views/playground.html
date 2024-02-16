@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+<!-- Set the title for playground page -->
+{% block title %} - Playground{% endblock title %}
+
+<!-- Content block for the Playground page -->
+{% block content %}
+<div class="row">
+    <!-- Badges for turn information and result display -->
+    <div class="col-md-4 d-none mx-auto" id="game_info_panel">
+      <div class="text-center">
+        <small><i class="fas fa-user-ninja"></i> - vs - <i class="fas fa-robot"></i></small>
+      </div>
+        <div class="card card-body">
+          <div class="d-flex justify-content-between">
+            <!-- Badge for user's turn -->
+            <div class="badge bg-info d-none">Your Turns - X</div>
+            <!-- Badge for displaying game result -->
+            <div class="badge d-none result"></div>
+            <!-- Badge for timer -->
+            <div class="badge bg-danger d-none timer"><i class="fas fa-stopwatch"></i> <span id="timerValue">30</span></div>
+            <!-- Badge for opponent's turn -->
+            <div class="badge bg-dark d-none">Opponent Turns - O</div>
+          </div>
+        </div>
+    </div>
+    <!-- Game board section -->
+    <div class="col-12 mb-4">
+    <div class="row">
+        <div class="col-md-6 mx-auto d-flex flex-column justify-content-center align-items-center">
+            <!-- Board layout -->
+            <div class="board card card-body p-1 mx-auto">
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"><small>play</small></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+                <div class="cell"></div>
+            </div>
+        </div>
+    </div>
+    </div>
+    <!-- Button to start a new game -->
+    <div class="col-12 text-center">
+        <button class="btn btn-outline-dark btn-sm" id="newGameBtn">Start New Game</button>
+    </div>
+    <!-- Game rules section -->
+    <div class="col-12 text-muted my-4">
+      <button class="btn border-0 w-100" type="button" data-bs-toggle="collapse" data-bs-target="#gameRulesCollapse">
+          <hr>
+          <h6 class="fw-bold"><i class="fas fa-flag"></i> Game Rule</h6>
+      </button>
+  
+      <div class="collapse" id="gameRulesCollapse">
+          <ul>
+              <!-- List of game rules -->
+              <li>You are assigned the symbol X, and the first turn is yours.</li>
+              <li>Click on a square to make a move.</li>
+              <li>The first click on one of the squares marks it with X, the next click with O, and so on.</li>
+              <li>If you have detected a winning situation, the game will declare the winner.</li>
+              <li>If no move was made for 30 seconds, a message of "You Lost" will be displayed, and a new game will start.</li>
+              <li>The game provides a button to start a new game.</li>
+              <li>The game ends with a draw if there's no winner.</li>
+              <li>When you win a game you'll get 100 scores or if you lost the game 100 scores will be deducted from you or it was a tie then nothing will happen.</li>
+              <li>You can visit <a href="/leaderboard" class="text-muted">leaderboard page</a> to see your ranking.</li>
+          </ul>
+      </div>
+  </div>
+         
+</div>
+{% endblock content %}
+
+<!-- Optional block for additional script customization -->
+{% block script %}
+<script>
+// Wait for the DOM content to be fully loaded before executing the script
+$(document).ready(function() {
+  // DOM element references using jQuery
+  const cells = $('.cell');  // Array of all game cells
+  const resultBadge = $('.result');  // Element to display game result
+  const newGameBtn = $('#newGameBtn');  // Button to start a new game
+  const timerBadge = $('.timer');  // Timer badge element
+  const userBadge = $('.badge.bg-info');  // User's turn badge
+  const opponentBadge = $('.badge.bg-dark');  // Opponent's turn badge
+  const game_info_panel = $('#game_info_panel');  // Opponent's turn badge
+
+  let timerInterval; // Declare a variable to store the timer interval
+  let timerSeconds = 30; // Initial timer value
+
+  // Event listener for starting a new game when the button is clicked
+  newGameBtn.on('click', startNewGame);
+
+  // Function to start a new game
+  function startNewGame() {
+    resetGame();
+    gameActive = true;
+    userBadge.removeClass('d-none');
+    opponentBadge.removeClass('d-none');
+    timerBadge.removeClass('d-none');
+    resultBadge.addClass('d-none');
+    game_info_panel.removeClass('d-none');
+    updateTurnDisplay();
+    // Uncomment the cell borders when the game starts
+    cells.text('').css('border', '2px solid #6e6e6e');
+  }
+
+  // Function to reset the game state
+  function resetGame() {
+    board = ['', '', '', '', '', '', '', '', ''];
+    cells.text('');
+    resultBadge.text('').removeClass('badge-success badge-danger badge-warning');
+    timerBadge.addClass('d-none');
+    currentPlayer = 'X';
+    clearInterval(timerInterval); // Clear any existing interval
+  }
+
+  // Function to handle a cell click
+  function handleCellClick(index) {
+    if (board[index] === '' && gameActive && currentPlayer === 'X') {
+      board[index] = currentPlayer;
+      cells.eq(index).text(currentPlayer);
+
+      const winner = checkWinner();
+      if (winner) {
+        endGame(winner);
+      } else {
+        currentPlayer = 'O'; // Switch to computer's turn
+        resetTimer();
+        updateTurnDisplay();
+        playComputerTurn();
+      }
+    }
+  }
+
+  // Function to simulate the computer's turn
+  function playComputerTurn() {
+    setTimeout(function() {
+      const emptyCells = board.reduce(function(acc, val, index) {
+        return val === '' ? acc.concat(index) : acc;
+      }, []);
+
+      if (emptyCells.length > 0) {
+        const randomIndex = emptyCells[Math.floor(Math.random() * emptyCells.length)];
+        board[randomIndex] = 'O';
+        cells.eq(randomIndex).text('O');
+
+        const winner = checkWinner();
+        if (winner) {
+          endGame(winner);
+        } else {
+          currentPlayer = 'X'; // Switch back to player's turn
+          resetTimer();
+          updateTurnDisplay();
+        }
+      }
+    }, 1000); // Fixed delay of 1 second for computer's turn
+  }
+
+  // Function to end the game and display the result
+  function endGame(winner) {
+    gameActive = false;
+    // Hide timer badge
+    timerBadge.addClass('d-none');
+    
+    // Display the result on the timer badge's place
+    resultBadge.removeClass('d-none');
+
+    // Remove existing classes from resultBadge
+    resultBadge.removeClass('bg-success bg-danger bg-warning');
+
+    if (winner === 'T') {
+      resultBadge.html('It\'s a Tie <i class="fas fa-handshake"></i>').addClass('bg-warning');
+    } else if (winner === 'X') {
+      resultBadge.html('You Win <i class="fas fa-gift"></i>').addClass('bg-success');
+    } else {
+      resultBadge.html('You Lost <i class="fas fa-frown"></i>').addClass('bg-danger');
+    }
+
+    // Update leaderboard score using AJAX
+    $.ajax({
+      url: '/update_leaderboard',
+      method: 'POST',
+      contentType: 'application/json',
+      data: JSON.stringify({ outcome: winner === 'X' ? 'win' : winner === 'O' ? 'loss' : 'tie' }),
+      success: function(response) {
+        console.log('Score updated successfully');
+      },
+      error: function(error) {
+        console.error('Error updating score:', error);
+      },
+    });
+
+    // Add the dark class to user and opponent badges
+    userBadge.addClass('bg-dark');
+    opponentBadge.addClass('bg-dark');
+    setTimeout(function() {
+      window.location.href = "/leaderboard";
+    }, 2000);
+  }
+
+  // Function to check for a winner based on the game board
+  function checkWinner() {
+    const winPatterns = [
+      [0, 1, 2], [3, 4, 5], [6, 7, 8],
+      [0, 3, 6], [1, 4, 7], [2, 5, 8],
+      [0, 4, 8], [2, 4, 6]
+    ];
+
+    for (let pattern of winPatterns) {
+      const [a, b, c] = pattern;
+      if (board[a] && board[a] === board[b] && board[a] === board[c]) {
+        return board[a];
+      }
+    }
+
+    return board.includes('') ? null : 'T';
+  }
+
+  // Function to update the display for the current turn
+  function updateTurnDisplay() {
+    userBadge.text('Your Turn - X');
+    opponentBadge.text('Opponent\'s Turn - O');
+    userBadge.toggleClass('bg-info', currentPlayer === 'X');
+    userBadge.toggleClass('bg-dark', currentPlayer !== 'X');
+    opponentBadge.toggleClass('bg-info', currentPlayer === 'O');
+    opponentBadge.toggleClass('bg-dark', currentPlayer !== 'O');
+    timerBadge.removeClass('d-none');
+    startTimer();
+  }
+
+  // Function to start the timer
+  function startTimer() {
+    timerInterval = setInterval(function() {
+      timerSeconds--;
+
+      if (timerSeconds < 0) {
+        clearInterval(timerInterval);
+        endGame(currentPlayer === 'X' ? 'O' : 'X');
+      }
+
+      updateTimerDisplay();
+    }, 1000);
+  }
+
+  // Function to reset the timer
+  function resetTimer() {
+    clearInterval(timerInterval);
+    timerSeconds = 30;
+    updateTimerDisplay();
+  }
+
+  // Function to update the timer display
+  function updateTimerDisplay() {
+    $('#timerValue').text(`${timerSeconds}s`);
+  }
+
+  // Event listeners for each cell to handle clicks
+  cells.on('click', function() {
+    handleCellClick($(this).index());
+  });
+});
+</script>
+{% endblock script %}
