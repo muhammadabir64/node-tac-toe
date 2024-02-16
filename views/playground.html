@@ -90,12 +90,19 @@ $(document).ready(function() {
   let timerInterval; // Declare a variable to store the timer interval
   let timerSeconds = 30; // Initial timer value
 
+  // if the user redirected from leaderboard page then it will start the game on page load
+  if(localStorage.getItem("autostart")){
+    startNewGame();
+    localStorage.removeItem("autostart");
+  }
+
   // Event listener for starting a new game when the button is clicked
   newGameBtn.on('click', startNewGame);
 
   // Function to start a new game
   function startNewGame() {
     resetGame();
+    resetTimer();
     gameActive = true;
     userBadge.removeClass('d-none');
     opponentBadge.removeClass('d-none');
